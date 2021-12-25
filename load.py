@@ -5,8 +5,8 @@ def load_pods_into_dataframe():
 
     pod_data = dict()
 
-    guest_folder = 'guests'
-    transcript_folder = 'transcripts'
+    guest_folder = 'scrapers/guests'
+    transcript_folder = 'scrapers/transcripts'
     for filename in os.listdir(guest_folder):
 
         pod_num = filename.split('.')[0]

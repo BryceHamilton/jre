@@ -1,6 +1,11 @@
-from multiprocessing.pool import ThreadPool as Pool
+import os
 import requests
+from multiprocessing.pool import ThreadPool as Pool
 from bs4 import BeautifulSoup
+
+def get_abs_path(dir):
+    curr_dir = os.path.dirname(__file__)
+    return os.path.abspath(os.path.join(curr_dir, dir))
 
 
 def scrape_jrescribe_pod(pod_num):
@@ -14,16 +19,21 @@ def scrape_jrescribe_pod(pod_num):
     doc = " ".join(doc_list)
     doc_no_footer = doc.split("Help improve this transcript!")[1]
 
-    with open(f"transcripts/{pod_num}.txt", "w") as f:
-        f.write(doc_no_footer)
-
     title = soup.find("h1").get_text()
     splitter = "with " if "MMA" in title else " - "
     guest = title.split(splitter)[1]
 
-    with open(f"guests/{pod_num}.txt", "w") as f:
+    file_name = f"{pod_num}.txt"
+
+    guests_dir = get_abs_path("guests")
+    guest_file_path = os.path.join(guests_dir, file_name)
+    with open(guest_file_path, "w") as f:
         f.write(guest)
 
+    transcripts_dir = get_abs_path("transcripts")
+    transcript_file_path = os.path.join(transcripts_dir, file_name)
+    with open(transcript_file_path, "w") as f:
+        f.write(doc_no_footer)
 
 def scrape_jrescribe(pool_size):
     POD_START = 1104

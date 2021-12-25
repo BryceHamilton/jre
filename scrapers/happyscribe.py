@@ -1,6 +1,11 @@
-from multiprocessing.pool import ThreadPool as Pool
+import os
 import requests
 from bs4 import BeautifulSoup
+from multiprocessing.pool import ThreadPool as Pool
+
+def get_abs_path(dir):
+    curr_dir = os.path.dirname(__file__)
+    return os.path.abspath(os.path.join(curr_dir, dir))
 
 
 def get_page_urls():
@@ -53,10 +58,16 @@ def scrape_happyscribe_pod(
     doc_list = [p.get_text() for p in paragraphs]
     doc = " ".join(doc_list)
 
-    with open(f"guests/{pod_num}.txt", "w") as f:
+    file_name = f"{pod_num}.txt"
+
+    guests_dir = get_abs_path("guests")
+    guest_file_path = os.path.join(guests_dir, file_name)
+    with open(guest_file_path, "w") as f:
         f.write(guest)
 
-    with open(f"transcripts/{pod_num}.txt", "w") as f:
+    transcripts_dir = get_abs_path("transcripts")
+    transcript_file_path = os.path.join(transcripts_dir, file_name)
+    with open(transcript_file_path, "w") as f:
         f.write(doc)
 
 
