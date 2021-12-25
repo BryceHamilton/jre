@@ -1,3 +1,2 @@
-- run happyscribe
-- add titles to jrescribe
-- add titles to happyscribe
+- load into dataframe
+- analyze
