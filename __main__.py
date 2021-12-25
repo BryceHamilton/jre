@@ -26,7 +26,7 @@ def clean_all():
 
 if __name__ == "__main__":
 
-    thread_count = 5
+    thread_count = 10
 
     start = time.time()
     scrape_all(thread_count)
