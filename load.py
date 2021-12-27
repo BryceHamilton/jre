@@ -34,7 +34,7 @@ def load_pods_into_dataframe():
         transcript = read_from(FOLDERS["transcripts"], pod_file)
         pod_data[pod_num].append(transcript)
 
-        date = read_from(FOLDERS["date"], pod_file)
+        date = read_from(FOLDERS["dates"], pod_file)
         pod_data[pod_num].append(date)
 
     columns = ["pod_num", "guest", "guest_desc", "transcript", "date"]
