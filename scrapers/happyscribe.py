@@ -1,24 +1,76 @@
-import os
 import requests
+from datetime import datetime
 from bs4 import BeautifulSoup
 from multiprocessing.pool import ThreadPool as Pool
 
-def get_abs_path(dir):
-    curr_dir = os.path.dirname(__file__)
-    return os.path.abspath(os.path.join(curr_dir, dir))
+from file_writers import write_all
+
+
+def get_soup(url):
+    page = requests.get(url)
+    soup = BeautifulSoup(page.content, "html.parser")
+    return soup
+
+
+def get_title(soup):
+    title = soup.find("h1", {"id": "episode-title"}).get_text()
+    return title
+
+
+def get_pod_num(title):
+    splitter = "with " if "MMA" in title else " - "
+
+    if "Companion" in title:
+        pod_num = "Fight_Companion"
+    else:
+        pod_num = title.split(splitter)[0]
+        pod_num = pod_num.split("#")[1].strip()
+        if "MMA" in title:
+            pod_num = f"MMA_{pod_num}"
+
+    return pod_num
+
+
+def get_guest(title):
+    splitter = "with " if "MMA" in title else " - "
+    guest = title.split(splitter)[1]
+    return guest
+
+
+def get_guest_desc(soup):
+    guest_desc = soup.find("div", {"id": "description"}).get_text()
+    return guest_desc
+
+
+def get_date(soup):
+    episode_info = soup.find("div", {"class": "hsp-episode-info"})
+    date_raw = episode_info.find(
+        "li", {"class": "hs-font-positive small-base date"}
+    ).get_text()
+    date_obj = datetime.strptime(date_raw.strip(), "%d %b %Y")
+    date = date_obj.strftime("%B %d, %Y")
+    return date
+
+
+def get_transcript(soup):
+    paragraphs = soup.find_all("p", {"class": "hsp-paragraph-words"})
+    doc_list = [p.get_text() for p in paragraphs]
+    transcript = " ".join(doc_list)
+    return transcript
 
 
 def get_page_urls():
-    base_url = "https://www.happyscribe.com/public/the-joe-rogan-experience"
+    BASE_URL = "https://www.happyscribe.com/public/the-joe-rogan-experience"
     pages = []
     for page_num in range(1, 8):
         query = "" if page_num == 1 else f"?page={page_num}"
-        url = f"{base_url}{query}"
+        url = f"{BASE_URL}{query}"
         pages.append(url)
     return pages
 
 
 def get_pod_urls(page_urls):
+    BASE_URL = "https://www.happyscribe.com"
     pod_urls = []
     for page_url in page_urls:
 
@@ -26,8 +78,11 @@ def get_pod_urls(page_urls):
         soup = BeautifulSoup(page.content, "html.parser")
 
         links = soup.find_all("a", {"class": "hsp-card-episode"})
+
         page_urls = [
-            f"https://www.happyscribe.com/{link.get('href')}" for link in links
+            f"{BASE_URL}/{link.get('href')}"
+            for link in links
+            if "Elon Musk Talks About Colonizing the Galaxy" not in link.get_text()
         ]
 
         for url in page_urls:
@@ -36,39 +91,22 @@ def get_pod_urls(page_urls):
     return pod_urls
 
 
-def scrape_happyscribe_pod(
-    url,
-):
-    page = requests.get(url)
-    soup = BeautifulSoup(page.content, "html.parser")
+def scrape_happyscribe_pod(url,):
+    soup = get_soup(url)
 
-    title = soup.find("h1", {"id": "episode-title"}).get_text()
+    date = get_date(soup)
+    guest_desc = get_guest_desc(soup)
 
-    splitter = "with " if "MMA" in title else " - "
+    title = get_title(soup)
+    if '-' not in title and 'MMA' not in title:
+        return
 
-    pod_num, guest = title.split(splitter)
-    pod_num = pod_num.split("#")[1].strip()
+    pod_num = get_pod_num(title)
+    guest = get_guest(title)
 
-    if "MMA" in title:
-        pod_num = f"MMA_{pod_num}"
-    elif "Companion" in title:
-        pod_num = "Fight_Companion"
+    transcript = get_transcript(soup)
 
-    paragraphs = soup.find_all("p", {"class": "hsp-paragraph-words"})
-    doc_list = [p.get_text() for p in paragraphs]
-    doc = " ".join(doc_list)
-
-    file_name = f"{pod_num}.txt"
-
-    guests_dir = get_abs_path("guests")
-    guest_file_path = os.path.join(guests_dir, file_name)
-    with open(guest_file_path, "w") as f:
-        f.write(guest)
-
-    transcripts_dir = get_abs_path("transcripts")
-    transcript_file_path = os.path.join(transcripts_dir, file_name)
-    with open(transcript_file_path, "w") as f:
-        f.write(doc)
+    write_all(pod_num, guest_desc, date, guest, transcript)
 
 
 def scrape_happyscribe(pool_size):
@@ -86,4 +124,4 @@ def scrape_happyscribe(pool_size):
 
 
 if __name__ == "__main__":
-    scrape_happyscribe()
+    scrape_happyscribe(pool_size=10)
