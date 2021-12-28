@@ -1,1 +1,3 @@
 - add setup.py
+- inverted index, deploy
+- run all throught speech-to-textt
