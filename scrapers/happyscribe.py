@@ -39,7 +39,7 @@ def get_guest(title):
 
 def get_guest_desc(soup):
     guest_desc = soup.find("div", {"id": "description"}).get_text()
-    return guest_desc
+    return guest_desc.strip().replace('\\', '')
 
 
 def get_date(soup):
@@ -55,7 +55,7 @@ def get_date(soup):
 def get_transcript(soup):
     paragraphs = soup.find_all("p", {"class": "hsp-paragraph-words"})
     doc_list = [p.get_text() for p in paragraphs]
-    transcript = " ".join(doc_list)
+    transcript = " ".join(doc_list).replace('\\', '')
     return transcript
 
 

@@ -17,7 +17,7 @@ def get_soup(pod_num):
 
 def get_guest_desc(soup):
     header = soup.find("div", {"class": "episode-header"})
-    guest_desc = header.find("p").get_text()
+    guest_desc = header.find("p").get_text().strip().replace('\\', '')
     return guest_desc
 
 
@@ -32,7 +32,7 @@ def get_transcript(soup):
     doc_list = [p.get_text() for p in p_tags]
     doc = " ".join(doc_list)
     transcript = doc.split("Help improve this transcript!")[1]
-    return transcript
+    return transcript.replace('\\', '')
 
 
 def get_guest(soup):
